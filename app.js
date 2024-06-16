@@ -79,24 +79,12 @@ const LearnerSubmissions = [
 const getLearnerData = (CourseInfo, AssignmentGroup, LearnerSubmissions) => {
   const result = [];
 
-  const calcScoreForAssignment = (
-    AssignmentGroupData,
-    currentLearnerSubmissionScore,
-    isAssignmentLate,
-    currentAssignmentId
-  ) => {
-    const points_possibleForAssignment = AssignmentGroupData.assignments.find(
-      (assignment) => assignment.id === currentAssignmentId
-    ).points_possible;
-
-    const scoreForAssignment = +(
-      (isAssignmentLate
-        ? currentLearnerSubmissionScore - points_possibleForAssignment * 0.1
-        : currentLearnerSubmissionScore) / points_possibleForAssignment
-    ).toFixed(3);
-
-    return scoreForAssignment;
-  };
+  //If an AssignmentGroup does not belong to its course (mismatching course_id), your program should throw an error
+  if (AssignmentGroup.course_id !== CourseInfo.id) {
+    throw new Error(
+      "Assignment Group does not belong to its course! Invalid input data!"
+    );
+  }
 
   const addAvg = () => {
     for (let i = 0; i < result.length; i++) {
@@ -115,38 +103,45 @@ const getLearnerData = (CourseInfo, AssignmentGroup, LearnerSubmissions) => {
         LearnerSubmissions[i].submission.score;
       const currentAssignmentId = LearnerSubmissions[i].assignment_id;
 
-      //isAssignmentLateCheck
+      const points_possibleForAssignment = AssignmentGroup.assignments.find(
+        (assignment) => assignment.id === currentAssignmentId
+      ).points_possible;
+
+      //if points_possible is 0
+      if (points_possibleForAssignment <= 0) {
+        throw new Error("Points possible must be larger than 0");
+      }
+
+      //If an assignment is not yet due, do not include it in the results or the average.
       const due_at = new Date(
         AssignmentGroup.assignments.find(
           (assignment) => assignment.id === currentAssignmentId
         ).due_at
       );
 
+      const isNotYetAssignmentDue = Date.now() < due_at;
+
+      if (isNotYetAssignmentDue) continue;
+      // --------------------------------------------------
+
+      //if the learner’s submission is late (submitted_at is past due_at), deduct 10 percent of the total points possible from their score for that assignment.
       const submitted_at = new Date(
         LearnerSubmissions[i].submission.submitted_at
       );
 
       const isAssignmentLate = due_at < submitted_at;
 
-      const isNotYetAssignmentDue = Date.now() < due_at;
-
-      if (isNotYetAssignmentDue) continue;
-
-      const points_possibleForAssignment = AssignmentGroup.assignments.find(
-        (assignment) => assignment.id === currentAssignmentId
-      ).points_possible;
-
-      const scoreForAssignment = calcScoreForAssignment(
-        AssignmentGroup,
-        currentLearnerSubmissionScore,
-        isAssignmentLate,
-        currentAssignmentId
-      );
-
+      //deduct 10 percent of the total points currentLearnerSubmissionScore - points_possibleForAssignment * 0.1
       const score = isAssignmentLate
         ? currentLearnerSubmissionScore - points_possibleForAssignment * 0.1
         : currentLearnerSubmissionScore;
 
+      const scoreForAssignment = +(
+        score / points_possibleForAssignment
+      ).toFixed(3);
+      //------------------------------------------------------
+
+      //if we have learner in our result array, check by learner id and currentLearner_id
       const isLearnerExistData = result.find(
         (learner) => learner.id === currentLearner_id
       );
@@ -168,6 +163,7 @@ const getLearnerData = (CourseInfo, AssignmentGroup, LearnerSubmissions) => {
         continue;
       }
 
+      // if we don`t have learner in our result array, creating new one and adding to array result
       currentLearner = {
         id: currentLearner_id,
         [currentAssignmentId]: scoreForAssignment,
@@ -181,9 +177,16 @@ const getLearnerData = (CourseInfo, AssignmentGroup, LearnerSubmissions) => {
     }
   };
 
-  getLearnerIdAndSubmission();
-
-  addAvg();
+  //Use try/catch and other logic to handle these types of errors gracefully.
+  try {
+    getLearnerIdAndSubmission();
+    addAvg();
+  } catch (error) {
+    console.log(error);
+    console.log(
+      "An error occurred. Please ensure that the data is entered correctly."
+    );
+  }
 
   return result;
 };
