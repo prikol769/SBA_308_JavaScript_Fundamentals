@@ -1,5 +1,5 @@
 ﻿<div align="center">
-# JavaScript Fundamentals
+  <h1>JavaScript Fundamentals</h1>
 </div>
 
 ## Objectives
