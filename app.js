@@ -86,12 +86,22 @@ const getLearnerData = (CourseInfo, AssignmentGroup, LearnerSubmissions) => {
     );
   }
 
+  // adding avg, use totalScore value and totalpointsPossible value
+  // after added avg, deleting totalScore and totalpointsPossible property from learner obj
   const addAvg = () => {
-    for (let i = 0; i < result.length; i++) {
+    let i = 0;
+
+    while (i < result.length) {
       result[i].avg = result[i].totalScore / result[i].totalpointsPossible;
       delete result[i].totalScore;
       delete result[i].totalpointsPossible;
+      i++;
     }
+    // for (let i = 0; i < result.length; i++) {
+    //   result[i].avg = result[i].totalScore / result[i].totalpointsPossible;
+    //   delete result[i].totalScore;
+    //   delete result[i].totalpointsPossible;
+    // }
   };
 
   const getLearnerIdAndSubmission = () => {
@@ -193,4 +203,36 @@ const getLearnerData = (CourseInfo, AssignmentGroup, LearnerSubmissions) => {
 
 const result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
 
-console.log(result);
+const greetBasedOnTime = () => {
+  const now = new Date();
+  const hours = now.getHours();
+  let greeting;
+
+  switch (true) {
+    case hours > 5 && hours < 12:
+      greeting = "Good morning!";
+      break;
+    case hours >= 12 && hours < 18:
+      greeting = "Good lunch!";
+      break;
+    case hours >= 18 && hours < 23:
+      greeting = "Good evening!";
+      break;
+    default:
+      greeting = "It's night now, what are you doing here, go to sleep!";
+      break;
+  }
+
+  console.log(
+    "*********************************************************************\n",
+    greeting,
+    "\n***********************"
+  );
+};
+
+greetBasedOnTime();
+
+console.log("result: ", result);
+console.log(
+  "*********************************************************************\n"
+);
