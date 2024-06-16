@@ -98,6 +98,14 @@ const getLearnerData = (CourseInfo, AssignmentGroup, LearnerSubmissions) => {
     return scoreForAssignment;
   };
 
+  const addAvg = () => {
+    for (let i = 0; i < result.length; i++) {
+      result[i].avg = result[i].totalScore / result[i].totalpointsPossible;
+      delete result[i].totalScore;
+      delete result[i].totalpointsPossible;
+    }
+  };
+
   const getLearnerIdAndSubmission = () => {
     for (let i = 0; i < LearnerSubmissions.length; i++) {
       let currentLearner = {};
@@ -124,12 +132,20 @@ const getLearnerData = (CourseInfo, AssignmentGroup, LearnerSubmissions) => {
 
       if (isNotYetAssignmentDue) continue;
 
+      const points_possibleForAssignment = AssignmentGroup.assignments.find(
+        (assignment) => assignment.id === currentAssignmentId
+      ).points_possible;
+
       const scoreForAssignment = calcScoreForAssignment(
         AssignmentGroup,
         currentLearnerSubmissionScore,
         isAssignmentLate,
         currentAssignmentId
       );
+
+      const score = isAssignmentLate
+        ? currentLearnerSubmissionScore - points_possibleForAssignment * 0.1
+        : currentLearnerSubmissionScore;
 
       const isLearnerExistData = result.find(
         (learner) => learner.id === currentLearner_id
@@ -143,6 +159,10 @@ const getLearnerData = (CourseInfo, AssignmentGroup, LearnerSubmissions) => {
         result[indexExistingLearner] = {
           ...result[indexExistingLearner],
           [currentAssignmentId]: scoreForAssignment,
+          totalScore: (result[indexExistingLearner].totalScore += score),
+          totalpointsPossible: (result[
+            indexExistingLearner
+          ].totalpointsPossible += points_possibleForAssignment),
         };
 
         continue;
@@ -151,6 +171,8 @@ const getLearnerData = (CourseInfo, AssignmentGroup, LearnerSubmissions) => {
       currentLearner = {
         id: currentLearner_id,
         [currentAssignmentId]: scoreForAssignment,
+        totalScore: score,
+        totalpointsPossible: points_possibleForAssignment,
       };
 
       result.push(currentLearner);
@@ -160,6 +182,8 @@ const getLearnerData = (CourseInfo, AssignmentGroup, LearnerSubmissions) => {
   };
 
   getLearnerIdAndSubmission();
+
+  addAvg();
 
   return result;
 };
